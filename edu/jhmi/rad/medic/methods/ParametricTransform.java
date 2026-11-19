@@ -43,7 +43,7 @@ public class ParametricTransform {
 	
 	float Iscale, Iscale2;
 	
-	boolean debug = false;
+	private static final boolean debug = false;
 	
 	public ParametricTransform(String type_, 
 								float x0i_, float y0i_, float z0i_,
