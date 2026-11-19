@@ -51,7 +51,7 @@ public class LesionToadPreprocess {
 	//private		float[][]	sliceLow, sliceHigh;
 	// for debug and display
 	static final boolean		debug				=	false;
-	static final boolean		verbose				=	true;
+	static final boolean		verbose				=	false;
     
 	// constants
 	private static final	float   ISQRT2 = (float)(1.0/Math.sqrt(2.0f));
@@ -777,7 +777,7 @@ public class LesionToadPreprocess {
 	/** 
 	 *  compute the FCM membership functions for initial tissues
 	 */
-    final public void initialMemberships(float[][][][] mems,float[][] centroid, int classes) {
+    final public float[][][][] initialMemberships(float[][][][] mems,float[][] centroid, int classes) {
         float dist, dist0;
         float den,num;
         float mean,count;
@@ -807,9 +807,13 @@ public class LesionToadPreprocess {
 				
 				// grouping: count the number of classes with same centroids
 				grouping[k] = 0.0f;
-				for (int m=0;m<classes;m++)
-					if (centroid[0][m]==centroid[0][k])
-						grouping[k]++;
+				for (int m=0;m<classes;m++) {
+				    boolean same=true;
+				    for (int c=0;c<nc;c++) {
+				        if (centroid[c][m]!=centroid[c][k]) same=false;
+				    }
+					if (same) grouping[k]++;
+				}
 			}
 			
 			// normalization
@@ -821,7 +825,7 @@ public class LesionToadPreprocess {
 			}
 			//normTime += System.currentTimeMillis()-start;				
 		}
-       // return mems;
+        return mems;
     }// initialMemberships
 
 	/**

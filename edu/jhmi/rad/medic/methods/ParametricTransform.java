@@ -723,10 +723,10 @@ public class ParametricTransform {
 			for (int n=0;n<12;n++) newtrans[n] = trans[n];
 			for (int n=12;n<Nn;n++) newtrans[n] = 0.0f;
 		} else {
-			System.out.println("change from "+oldType_+" to "+newType_+" currently not supported\n");
+			if (debug) System.out.println("change from "+oldType_+" to "+newType_+" currently not supported\n");
 			return trans;
 		}
-		System.out.println("change from "+oldType_+" to "+newType_+" done ("+newtrans.length+")\n");
+		if (debug) System.out.println("change from "+oldType_+" to "+newType_+" done ("+newtrans.length+")\n");
 		return newtrans;
 	}
 	

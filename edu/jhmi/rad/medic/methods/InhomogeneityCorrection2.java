@@ -267,6 +267,7 @@ public class InhomogeneityCorrection2 {
 			isWorking = false;
 			return;
 		}		
+		if (debug) System.out.println("degree: "+degree);
 		
 		scale = scale_;
 		
@@ -276,6 +277,8 @@ public class InhomogeneityCorrection2 {
 		coordinateType = coord_;
 		normType = norm_;
 		var = var_;
+
+		if (debug) System.out.println("Algorithm type: "+algorithmType);
 		
 		pq = q_;
 		if (pq!=0 && pq!=1 && pq!=2 && pq!=3) {
@@ -402,6 +405,7 @@ public class InhomogeneityCorrection2 {
 			isWorking = false;
 			return;
 		}		
+		if (debug) System.out.println("degree = "+degree);
 		
 		scale = scale_;
 		
@@ -590,6 +594,7 @@ public class InhomogeneityCorrection2 {
 	 *	(main function to call)
 	 */
 	 final public void computeCorrectionField(int deg) {
+	     if (debug) System.out.println("correction field "+deg+"("+algorithmType+")");
 		 switch (algorithmType) {
 			 case CHEBYSHEV: 	compute3DPolynomialField(deg);	break;
 			 case SPLINES:	 	compute3DSplineField( (degree+1)/(deg+1)*scale); break;
@@ -685,6 +690,8 @@ public class InhomogeneityCorrection2 {
         long inner_loop_time;
 		if (verbose) inner_loop_time = System.currentTimeMillis();
 
+		if (debug) System.out.println("polynomial field: "+deg);
+		
 		// compute the degree and size
 		int np = 0;
 		if (deg>degree) {
@@ -730,9 +737,10 @@ public class InhomogeneityCorrection2 {
 		}
 		
 		if (debug) {
-			//System.out.println("factor: "+factor.matrixToString(5,2)+"\n");
-			//System.out.println("img: "+img.matrixToString(5,2)+"\n");
+			//System.out.println("factor: "+factor.print(5,2)+"\n");
+			//System.out.println("img: "+img.print(5,2)+"\n");
 		}
+		if (debug) System.out.println("solving Chebyshev polynomial");
 		
 		// coeff = factor^-1 img
 		Matrix coeff = factor.solve(img);

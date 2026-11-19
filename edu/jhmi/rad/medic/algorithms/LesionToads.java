@@ -48,6 +48,7 @@ public class LesionToads {
 	private	String[]	modality;		// image modality
 	private	String		algorithmMode;		// variants of the algorithm
 	private	String		connectivityType;		// choice of connectivity
+	private	String		lutDir;		// topology directory
 	
     // segmentation parameters
     private	String				atlasName;
@@ -130,7 +131,8 @@ public class LesionToads {
 			String correctType_,
 			int poly_, float kernel_,
 			String algo_,
-			String connect_) {
+			String connect_,
+			String lutdir_) {
         
 	    nc = nInput_;
 		modality = imgModal_;
@@ -173,6 +175,7 @@ public class LesionToads {
 		registrationMode = regMode_;
 		
 		connectivityType = connect_;
+		lutDir = lutdir_;
 		
 		register = register_;
 		levels = lev_;
@@ -214,7 +217,7 @@ public class LesionToads {
     /**
     *	produces the segmentation of the input image
     */
-    private void calcSegmentation() {
+    public void calcSegmentation() {
 		byte[][][]   	classification = null;
 		byte[][][]   	classification_mem = null;
 		float[][]		centroids = null;
@@ -326,7 +329,7 @@ public class LesionToads {
 								maxGMDist, maxBstemDist, maxVentDist,
 								atlasFirstCoefficient, atlasScale,
 								modality,
-								algorithmMode, normType, connectivityType,
+								"normal distance", normType, connectivityType, lutDir,
 								centroidMode, centroidSmoothness);
 
 		// get the centroids from initialization
@@ -346,7 +349,7 @@ public class LesionToads {
 		//if (verbose) System.out.println("initial "+segmentation.displayBlackHoleCentroid());
 		
 		// also use the initial memberships (re-computed)
-		preprocess.initialMemberships(segmentation.getMemberships(), centroids, classes);
+		segmentation.setMemberships(preprocess.initialMemberships(segmentation.getMemberships(), centroids, classes));
 
 		// re-initialize the atlas alignment
 		atlas.updateShapeRegistration(segmentation.getMemberships(), segmentation.getSegmentation(), 
@@ -503,7 +506,8 @@ public class LesionToads {
 			// d. update classification only at the end
 			//--------------------------------------------------------------
 			if (stop) {
-				segmentation.updateClassificationFromLabels();
+			    int update = segmentation.updateClassificationFromLabels();
+				if (verbose) System.out.println("update: "+update);
 				segmentation.updateLesionClassifcation();
 				segmentation.finalizeSegmentation(rx*ry*rz);
 			}

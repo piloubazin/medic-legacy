@@ -225,7 +225,7 @@ public class DemonToadDeformableAtlas {
 			if (name[k].equals(txt)) return k;
 		return -1;
 	}
-final public int getNameLabel (String txt){
+	final public int getNameLabel (String txt){
 		
 		for (int k=0; k<classes; k++)
 			if (name[k].equals(txt)) return label[k];

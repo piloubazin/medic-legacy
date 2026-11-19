@@ -86,7 +86,12 @@ public class LesionToadSegmentation {
 	private		float[]			smoothingFactor;
 		
 	
-	private		CriticalPointLUT	lut;				// the LUT for critical points
+	private     boolean[][][]       pattern = new boolean[3][3][3];
+	private     CriticalPointLUT    lut;
+	private     String	            lutdir = null;
+	private     String              connectType;
+	private		boolean				checkComposed;		// check if the objects are well-composed too (different LUTs)
+	private		boolean				checkTopology;		// check if the objects are well-composed too (different LUTs)
 		
 	// parameters
 	private 	float   		smoothing;   	// RFCM smoothing parameter
@@ -198,7 +203,8 @@ public class LesionToadSegmentation {
 						short maxGMDist_, short maxBstemDist_, short maxVentDist_,
 						float firstPriorCoeff_, float priorScale_,
 						String[] imgModal_,
-						String algoMode, String normType_, String connectivityType,
+						String algoMode, String normType_, 
+						String connectType, String lutdir_,
 						String centMode, float centSmo_) {
 		images = images_;
 		atlas = atlas_;
@@ -306,6 +312,7 @@ public class LesionToadSegmentation {
 		field = new float[nc][][][];
 		for (int c=0;c<nc;c++) field[c] = null;
 		
+		lutdir = lutdir_;
 			
 		// init all the arrays
 		try {
@@ -343,13 +350,41 @@ public class LesionToadSegmentation {
 			boundaryDist = new byte[nx][ny][nz][classes];
 			ordering = new float[nx][ny][nz];
 			tree = new BinaryHeap4D(nx*ny+ny*nz+nz*nx, BinaryHeap4D.MAXTREE);
-			if (connectivityType.equals("26/6")) lut = new CriticalPointLUT("critical266LUT.raw.gz",200);
-			else if (connectivityType.equals("6/26")) lut = new CriticalPointLUT("critical626LUT.raw.gz",200);
-			else if (connectivityType.equals("18/6")) lut = new CriticalPointLUT("critical186LUT.raw.gz",200);
-			else if (connectivityType.equals("6/18")) lut = new CriticalPointLUT("critical618LUT.raw.gz",200);
-			else if (connectivityType.equals("6/6")) lut = new CriticalPointLUT("critical66LUT.raw.gz",200);
-			else lut = new CriticalPointLUT("critical266LUT.raw.gz",200);
-			lut.loadCompressedPattern();
+			// topology luts
+			checkTopology=true;
+			checkComposed=false;
+				 if (connectType.equals("26/6")) lut = new CriticalPointLUT(lutdir, "critical266LUT.raw.gz",200);
+			else if (connectType.equals("6/26")) lut = new CriticalPointLUT(lutdir, "critical626LUT.raw.gz",200);
+			else if (connectType.equals("18/6")) lut = new CriticalPointLUT(lutdir, "critical186LUT.raw.gz",200);
+			else if (connectType.equals("6/18")) lut = new CriticalPointLUT(lutdir, "critical618LUT.raw.gz",200);
+			else if (connectType.equals("6/6")) lut = new CriticalPointLUT(lutdir, "critical66LUT.raw.gz",200);
+			else if (connectType.equals("wcs")) {
+				lut = new CriticalPointLUT(lutdir, "criticalWCLUT.raw.gz",200);
+				checkComposed=true;
+			}
+			else if (connectType.equals("wco")) {
+				lut = null;
+				checkComposed=true;
+				checkTopology=false;
+			}
+			else if (connectType.equals("no")) {
+				lut = null;
+				checkComposed=false;
+				checkTopology=false;
+			}
+			else {
+				lut = null;
+				checkComposed=false;
+				checkTopology=false;
+			}
+			if (checkTopology) {
+				if (!lut.loadCompressedPattern()) {
+					System.out.println("Problem loading the algorithm's LUT from: "+lut.getFilename());
+					BasicInfo.displayMessage("Problem loading the algorithm's LUT from: "+lut.getFilename()+"\n");
+				} else {
+					if (debug) System.out.println("LUT loaded from: "+lut.getFilename());
+				}
+			}
 			relationMap = new short[nx][ny][nz];
 			segmentation = new byte[nx][ny][nz]; 
 			max_mem_segmentation = new byte[nx][ny][nz];
@@ -377,6 +412,9 @@ public class LesionToadSegmentation {
 				break;
 			}
 			if (optimize)for (int c=0; c<nc; c++) {
+			    pcsf[c] = atlas.getOptimizedFactor(modality[c])[0];
+				pgm[c] = atlas.getOptimizedFactor(modality[c])[1];
+				pwm[c] = atlas.getOptimizedFactor(modality[c])[2];
 				if (debug) System.out.println(modality[c] + " : " + pcsf[c] + " "+pgm[c]+" "+pwm[c] );
 				powercsf[c] = new PowerTable(0.0f , 4.0f , 0.000001f , pcsf[c] );
 				powergm[c] = new PowerTable(0.0f , 4.0f , 0.000001f , pgm[c] );
@@ -517,7 +555,6 @@ public class LesionToadSegmentation {
         images = null;
 		tree.finalize();
 		tree = null;
-		lut.finalize();
 		lut = null;
 		System.gc();
 	}
@@ -582,9 +619,9 @@ public class LesionToadSegmentation {
 	}
 	
 	public void setModifiedVentDistance (byte dist_) { MaxVentDist = dist_;}
-	public final void resetClassification() { 
+	/*public final void resetClassification() { 
 		classification = atlas.getTemplate();
-	}
+	}*/
 
 	public final void initCentroids(float[][] cent) { 
 		for (int  c=0;c<nc;c++) {
@@ -638,6 +675,7 @@ public class LesionToadSegmentation {
 					  	available[x][y][z][k]=false;
 						order = ordering[x][y][z] + maxMembershipRatio(x,y,z,k,bestMembership(x,y,z));
 						tree.addValue(order,x,y,z,k);
+						//System.out.print("<");						
 					}
 				}
 			}
@@ -745,6 +783,7 @@ public class LesionToadSegmentation {
 						// best to use the membership of the object to be removed
 						order = - 1.0f/maxMembershipRatio(x,y,z,k,bestMembership(x,y,z));
 						tree.addValue(order,x,y,z,k);
+						//System.out.print(">");
 						Nbound[k]++;
 					}
 				}
@@ -753,10 +792,10 @@ public class LesionToadSegmentation {
 		
 	}//initGlobalThinningLabels
 		
-/**
- * Methods for comouting distances from boundary of different structures
- * These distances used to form relationship function for lesions
- */
+	/**
+	 * Methods for comouting distances from boundary of different structures
+	 * These distances used to form relationship function for lesions
+	 */
 	
 	private void init1Ddistance(){
 		long t = System.currentTimeMillis();
@@ -764,12 +803,14 @@ public class LesionToadSegmentation {
 		int id;
 		for (int k=0; k<classes; k++) for (int x=1;x<nx-1;x++) for (int y=1;y<ny-1;y++) for (int z=1;z<nz-1;z++) {
 			id = k*nx*ny*nz+x*ny*nz+y*nz+z;
-			if (classification[x][y][z]==labels[k])
+			//if (classification[x][y][z]==labels[k])
+			if (segmentation[x][y][z]==k)
 				structureDistances[id] = 0; //distance inside object set to zero
 			else if (structureDistances[id] !=1)
 				structureDistances[id] = -1; /// initial distance -1
 			for (int i=-1;i<=1;i++) for (int j=-1;j<=1;j++) for (int l=-1;l<=1;l++) if (i*i+j*j+l*l==1) {
-				if ( classification[x+i][y+j][z+l]==labels[k]){
+				//if ( classification[x+i][y+j][z+l]==labels[k]){
+				if ( segmentation[x+i][y+j][z+l]==k){
 					if ( structureDistances[id]== -1) //check if it is inside
 						structureDistances[id] = 1;
 				}
@@ -779,46 +820,43 @@ public class LesionToadSegmentation {
 		labels = null;
 			
 	}
+	
 	public final void compute1Ddistances() {
-		
-		
-		
-		
-	// diffuse the coefficients till get to the desired point
-	int id1,id2;	
-	long t = System.currentTimeMillis();
-	for (int k=0;k<classes;k++) {
-		if (debug) System.out.println("Computing distances from "+atlas.getNames()[k]+" ...");
-		boolean stop =false;
-		byte count = 1;
-		while (!stop) {
-			stop = true;
-			for (int x=1;x<nx-1;x++) for (int y=1;y<ny-1;y++) for (int z=1;z<nz-1;z++) {
-				id1 = k*nx*ny*nz+x*ny*nz+y*nz+z;
-				if (structureDistances[id1]==count) {
-					for (int i=-1;i<=1;i++) for (int j=-1;j<=1;j++) for (int l=-1;l<=1;l++) if (i*i+j*j+l*l==1) {
-						id2 = k*nx*ny*nz+(x+i)*ny*nz+(y+j)*nz+z+l;
-						if ( ( structureDistances[id2]==-1 )) {
-							structureDistances[id2] = (byte)(count+1);//*(count+1.0f);
-							stop = false;
-						}
-					}
-				}
-			}
-			count = (byte)(count+1);
-			if (count >= 10)
-				stop = true;
-				
-		}
-		
-	}
-	if (debug) System.out.println("1D distance computation: "+ (System.currentTimeMillis()-t));
-	return;
-			
-}
+        // diffuse the coefficients till get to the desired point
+        int id1,id2;	
+        long t = System.currentTimeMillis();
+        for (int k=0;k<classes;k++) {
+            if (debug) System.out.println("Computing distances from "+atlas.getNames()[k]+" ...");
+            boolean stop =false;
+            byte count = 1;
+            while (!stop) {
+                stop = true;
+                for (int x=1;x<nx-1;x++) for (int y=1;y<ny-1;y++) for (int z=1;z<nz-1;z++) {
+                    id1 = k*nx*ny*nz+x*ny*nz+y*nz+z;
+                    if (structureDistances[id1]==count) {
+                        for (int i=-1;i<=1;i++) for (int j=-1;j<=1;j++) for (int l=-1;l<=1;l++) if (i*i+j*j+l*l==1) {
+                            id2 = k*nx*ny*nz+(x+i)*ny*nz+(y+j)*nz+z+l;
+                            if ( ( structureDistances[id2]==-1 )) {
+                                structureDistances[id2] = (byte)(count+1);//*(count+1.0f);
+                                stop = false;
+                            }
+                        }
+                    }
+                }
+                count = (byte)(count+1);
+                if (count >= 10)
+                    stop = true;
+                    
+            }
+            
+        }
+        if (debug) System.out.println("1D distance computation: "+ (System.currentTimeMillis()-t));
+        return;
+                
+    }
 	
 	
-	final public float[][][] fastDistance (boolean[][][] obj, float maxDist, int nx, int ny, int nz){
+	final public float[][][] fastDistance(boolean[][][] obj, float maxDist, int nx, int ny, int nz){
 		float[][][] dist = new float[nx][ny][nz];
 
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
@@ -858,7 +896,7 @@ public class LesionToadSegmentation {
 	}	
 	
 	
-	final public float[][][] fastFloatDistance (boolean[][][] obj, byte maxDist,int nx, int ny, int nz){
+	final public float[][][] fastFloatDistance(boolean[][][] obj, byte maxDist,int nx, int ny, int nz){
 		float[][][] dist = new float[nx][ny][nz];
 		if (maxDist !=0){
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
@@ -899,7 +937,7 @@ public class LesionToadSegmentation {
 		
 		return dist;
 	}
-	final public float[][][] fastNormalizedDistance (boolean[][][] obj, byte maxDist,float minDist, int nx, int ny, int nz){
+	final public float[][][] fastNormalizedDistance(boolean[][][] obj, byte maxDist,float minDist, int nx, int ny, int nz){
 		float[][][] dist = fastFloatDistance(obj, maxDist, nx, ny, nz);
 		
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++)  
@@ -909,9 +947,9 @@ public class LesionToadSegmentation {
 			else if (dist[x][y][z] !=-1)
 				dist[x][y][z] = dist[x][y][z]/(float)maxDist;
 		return dist;
-		}	
+	}	
 	
-	final public byte[][][] fastDistance (boolean[][][] obj, byte maxDist, int nx, int ny, int nz){
+	final public byte[][][] fastDistance(boolean[][][] obj, byte maxDist, int nx, int ny, int nz){
 		byte[][][] dist = new byte[nx][ny][nz];
 
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
@@ -1067,7 +1105,7 @@ public class LesionToadSegmentation {
 		
 	}
 	
-final public void computeNormalizedModifiedVentDistance(){
+	final public void computeNormalizedModifiedVentDistance(){
 		
 		
 		boolean[][][] vent_mod_mask = new boolean[nx][ny][nz];
@@ -1721,12 +1759,105 @@ final public void computeNormalizedModifiedVentDistance(){
 		if (img==mean) return 0.0f;
 		else return 1.0f;
 	}
-	
+
 	/**
 	 *  critical relation detection: groups objects with relations
 	 */
+	 /*
+	private final boolean isHomeomorphicSegmentation(short x, short y, short z, short k) {
+        if (!checkTopology) return true;
+ 		for (int i=-1;i<=1;i++) for (int j=-1;j<=1;j++) for (int l=-1;l<=1;l++) {
+            if (segmentation[x+i][y+j][z+l]==k) pattern[i+1][j+1][l+1] = true;
+            else pattern[i+1][j+1][l+1] = false;
+        }
+        if (checkComposed) if (!isWellComposed(pattern,1,1,1)) return false;		
+		if (!lut.get(lut.keyFromPattern(pattern,1,1,1))) return false;
+		return true;
+    }*/
+    private final boolean isWellComposed(boolean[][][] img, int x, int y, int z) {
+		if (img[x][y][z]) {
+			// 18-C
+			if (img[x-1][y-1][z] && !(img[x-1][y][z] || img[x][y-1][z]) ) return false;
+			if (img[x][y-1][z-1] && !(img[x][y-1][z] || img[x][y][z-1]) ) return false;
+			if (img[x-1][y][z-1] && !(img[x][y][z-1] || img[x-1][y][z]) ) return false;
+		
+			if (img[x-1][y+1][z] && !(img[x-1][y][z] || img[x][y+1][z]) ) return false;
+			if (img[x][y-1][z+1] && !(img[x][y-1][z] || img[x][y][z+1]) ) return false;
+			if (img[x+1][y][z-1] && !(img[x][y][z-1] || img[x+1][y][z]) ) return false;
+		
+			if (img[x+1][y-1][z] && !(img[x+1][y][z] || img[x][y-1][z]) ) return false;
+			if (img[x][y+1][z-1] && !(img[x][y+1][z] || img[x][y][z-1]) ) return false;
+			if (img[x-1][y][z+1] && !(img[x][y][z+1] || img[x-1][y][z]) ) return false;
+				
+			if (img[x+1][y+1][z] && !(img[x+1][y][z] || img[x][y+1][z]) ) return false;
+			if (img[x][y+1][z+1] && !(img[x][y+1][z] || img[x][y][z+1]) ) return false;
+			if (img[x+1][y][z+1] && !(img[x][y][z+1] || img[x+1][y][z]) ) return false;
+		
+			// 26-C
+			if (img[x-1][y-1][z-1] && !( (img[x-1][y][z] && img[x-1][y-1][z]) 
+									  || (img[x-1][y][z] && img[x-1][y][z-1]) 
+									  || (img[x][y-1][z] && img[x][y-1][z-1]) 
+									  || (img[x][y-1][z] && img[x-1][y-1][z]) 
+									  || (img[x][y][z-1] && img[x-1][y][z-1]) 
+									  || (img[x][y][z-1] && img[x][y-1][z-1]) ) ) return false;
+		
+			if (img[x-1][y-1][z+1] && !( (img[x-1][y][z] && img[x-1][y-1][z]) 
+									  || (img[x-1][y][z] && img[x-1][y][z+1]) 
+									  || (img[x][y-1][z] && img[x][y-1][z+1]) 
+									  || (img[x][y-1][z] && img[x-1][y-1][z]) 
+									  || (img[x][y][z+1] && img[x-1][y][z+1]) 
+									  || (img[x][y][z+1] && img[x][y-1][z+1]) ) ) return false;
+		
+			if (img[x-1][y+1][z-1] && !( (img[x-1][y][z] && img[x-1][y+1][z]) 
+									  || (img[x-1][y][z] && img[x-1][y][z-1]) 
+									  || (img[x][y+1][z] && img[x][y+1][z-1]) 
+									  || (img[x][y+1][z] && img[x-1][y+1][z]) 
+									  || (img[x][y][z-1] && img[x-1][y][z-1]) 
+									  || (img[x][y][z-1] && img[x][y+1][z-1]) ) ) return false;
+		
+			if (img[x+1][y-1][z-1] && !( (img[x+1][y][z] && img[x+1][y-1][z]) 
+									  || (img[x+1][y][z] && img[x+1][y][z-1]) 
+									  || (img[x][y-1][z] && img[x][y-1][z-1]) 
+									  || (img[x][y-1][z] && img[x+1][y-1][z]) 
+									  || (img[x][y][z-1] && img[x+1][y][z-1]) 
+									  || (img[x][y][z-1] && img[x][y-1][z-1]) ) ) return false;
+		
+			if (img[x-1][y+1][z+1] && !( (img[x-1][y][z] && img[x-1][y+1][z]) 
+									  || (img[x-1][y][z] && img[x-1][y][z+1]) 
+									  || (img[x][y+1][z] && img[x][y+1][z+1]) 
+									  || (img[x][y+1][z] && img[x-1][y+1][z]) 
+									  || (img[x][y][z+1] && img[x-1][y][z+1]) 
+									  || (img[x][y][z+1] && img[x][y+1][z+1]) ) ) return false;
+		
+			if (img[x+1][y-1][z+1] && !( (img[x+1][y][z] && img[x+1][y-1][z]) 
+									  || (img[x+1][y][z] && img[x+1][y][z+1]) 
+									  || (img[x][y-1][z] && img[x][y-1][z+1]) 
+									  || (img[x][y-1][z] && img[x+1][y-1][z]) 
+									  || (img[x][y][z+1] && img[x+1][y][z+1]) 
+									  || (img[x][y][z+1] && img[x][y-1][z+1]) ) ) return false;
+		
+			if (img[x+1][y+1][z-1] && !( (img[x+1][y][z] && img[x+1][y+1][z]) 
+									  || (img[x+1][y][z] && img[x+1][y][z-1]) 
+									  || (img[x][y+1][z] && img[x][y+1][z-1]) 
+									  || (img[x][y+1][z] && img[x+1][y+1][z]) 
+									  || (img[x][y][z-1] && img[x+1][y][z-1]) 
+									  || (img[x][y][z-1] && img[x][y+1][z-1]) ) ) return false;
+		
+			if (img[x+1][y+1][z+1] && !( (img[x+1][y][z] && img[x+1][y+1][z]) 
+									  || (img[x+1][y][z] && img[x+1][y][z+1]) 
+									  || (img[x][y+1][z] && img[x][y+1][z+1]) 
+									  || (img[x][y+1][z] && img[x+1][y+1][z]) 
+									  || (img[x][y][z+1] && img[x+1][y][z+1]) 
+									  || (img[x][y][z+1] && img[x][y+1][z+1]) ) ) return false;
+		}
+		
+		return true;
+	}
+
+	
     private final boolean isHomeomorphicSegmentation(short x, short y, short z, short k) {
 		// is the new object regular ? not the growing object, the original one!!
+		if (!checkTopology && !checkComposed) return true;
 		
 		// inside the original object ?
 		if (segmentation[x][y][z]==k) return true;
@@ -1743,7 +1874,8 @@ final public void computeNormalizedModifiedVentDistance(){
 		}
 		obj[1][1][1] = true;
 		
-		if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+		if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+		if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 			
 		// does it change the topology of the object it modifies ?
 		for (int i=-1;i<=1;i++) for (int j=-1;j<=1;j++) for (int l=-1;l<=1;l++) {
@@ -1755,7 +1887,8 @@ final public void computeNormalizedModifiedVentDistance(){
 		}
 		obj[1][1][1] = false;
 		
-		if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+		if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+		if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 
 		// does it change the topology of a relation between the modified object and its neighbors ?
 		int  Nconfiguration = 0;
@@ -1787,7 +1920,8 @@ final public void computeNormalizedModifiedVentDistance(){
 				}
 			}
 			obj[1][1][1] = false;
-			if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+			if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+			if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 		}
 		for (int n=0;n<Nconfiguration;n++) {
 			// in relation with new object
@@ -1800,7 +1934,8 @@ final public void computeNormalizedModifiedVentDistance(){
 				}
 			}
 			obj[1][1][1] = true;
-			if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+			if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+			if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 		}
 
 		// triplets
@@ -1817,7 +1952,8 @@ final public void computeNormalizedModifiedVentDistance(){
 					}
 				}
 				obj[1][1][1] = false;
-				if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+				if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+				if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 			}
 		}
 		for (int n=0;n<Nconfiguration;n++) {
@@ -1833,7 +1969,8 @@ final public void computeNormalizedModifiedVentDistance(){
 					}
 				}
 				obj[1][1][1] = true;
-				if (!lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
+				if (checkComposed) if (!isWellComposed(obj,1,1,1)) return false;		
+				if (checkTopology && !lut.get(lut.keyFromPattern(obj,1,1,1))) return false;
 			}
 		}
 
@@ -1844,6 +1981,7 @@ final public void computeNormalizedModifiedVentDistance(){
 	/**
 	 *  critical relation detection: groups objects with relations
 	 */
+	 /*
     private final boolean isSimpleSkeleton(short x, short y, short z) {
 		boolean [][][] obj = new boolean[3][3][3];
 		
@@ -1861,7 +1999,7 @@ final public void computeNormalizedModifiedVentDistance(){
 
 		// else, it works
 		return true;
-    }
+    }*/
 	
 	
 	/** global score for thinning object k */
@@ -2085,6 +2223,7 @@ final public void computeNormalizedModifiedVentDistance(){
 				isRegular = isHomeomorphicSegmentation(x,y,z,k);
 				
 				if (isRegular) {
+				    //if (debug) System.out.print('+');
 					// regular point : set the distance
 					skeleton[x][y][z] = (byte)k;
 					for (int m=0;m<classes;m++) {
@@ -2306,7 +2445,6 @@ final public void computeNormalizedModifiedVentDistance(){
 		changeBoundary = true;
 		while (isNotEmpty() && (val > -limit)) {
 
-
 			// get the next value
 			x = tree.getFirstX();
 			y = tree.getFirstY();
@@ -2375,13 +2513,15 @@ final public void computeNormalizedModifiedVentDistance(){
 					
 				
 					// test for update
-					if (changeBoundary) 
+					if (changeBoundary) {
+					    //if (debug) System.out.print(':');
 						changeBoundary = isHomeomorphicSegmentation(x,y,z,id);
-				
+					}
 					// much better (faster, and more flexible)
 					isRegular = (volume[k]>minVolume[k]);
 					
 					if (isRegular) {
+					    //if (debug) System.out.print('-');
 						// reset labels
 						available[x][y][z][k] = false;	
 					
@@ -2403,7 +2543,10 @@ final public void computeNormalizedModifiedVentDistance(){
 						skeleton[x][y][z] = EMPTY;
 						
 						// update the classification in good cases
-						if (changeBoundary) segmentation[x][y][z] = id;
+						if (changeBoundary) {
+						    segmentation[x][y][z] = id;
+						    //if (debug) System.out.print(".");
+						}
 					
 						// search for new or critical neighbors
 						for (short i=-1;i<=1;i++) for (short j=-1;j<=1;j++) for (short l=-1;l<=1;l++) if (i*i+j*j+l*l==1) {
@@ -2464,6 +2607,7 @@ final public void computeNormalizedModifiedVentDistance(){
 				isRegular = isHomeomorphicSegmentation(x,y,z,m);
 				
 				if (isRegular) {
+				    //System.out.print('/');
 					// regular point : set the distance
 					segmentation[x][y][z] = m;
 					skeleton[x][y][z] = m;
@@ -3514,7 +3658,8 @@ final public void computeNormalizedModifiedVentDistance(){
     	int lesionVolume =0;
     	   	
     	for (int x =0; x<nx; x++) for (int y =0; y<ny; y++) for (int z=0; z<nz; z++) if (hasLesion)
-    		if (  (classification[x][y][z] == templateLabel[lesionClass])
+    		//if (  (classification[x][y][z] == templateLabel[lesionClass])
+    		if (  (segmentation[x][y][z] == lesionClass)
     			 && ( (lesionMembership[x][y][z] > mems[x][y][z][lesionClass]) || (blackHoleMem[x][y][z] > mems[x][y][z][lesionClass]) ) ) {
     			
     			if (lesionMembership[x][y][z] < blackHoleMem[x][y][z])
@@ -3539,7 +3684,9 @@ final public void computeNormalizedModifiedVentDistance(){
 		for (int k=0; k<classes; k++)
 			if (atlas.getNames()[k].equalsIgnoreCase("Cerebellum-GM")) gm =k;
     	for (int x =0; x<nx; x++) for (int y =0; y<ny; y++) for (int z=0; z<nz; z++) if (hasLesion)
-    		if ( ( classification[x][y][z] == templateLabel[lesionClass]) && ( mems[x][y][z][lesionClass] < (lesionMembership[x][y][z] + mems[x][y][z][gm]))){
+    		//if ( ( classification[x][y][z] == templateLabel[lesionClass]) 
+    		if ( ( segmentation[x][y][z] == lesionClass) 
+    		    && ( mems[x][y][z][lesionClass] < (lesionMembership[x][y][z] + mems[x][y][z][gm]))){
     			 
     			lesionClassification_mem[x][y][z] = (short)1;
     			lesionVolume++;
@@ -3587,7 +3734,8 @@ final public void computeNormalizedModifiedVentDistance(){
 				lesionClassification[x][y][z] = 1;
 			else
 				lesionClassification[x][y][z] = 0;
-			if (lesionClassification[x][y][z]==1 & classification[x][y][z]!=templateLabel[wmClass]){
+			//if (lesionClassification[x][y][z]==1 & classification[x][y][z]!=templateLabel[wmClass]){
+			if (lesionClassification[x][y][z]==1 & segmentation[x][y][z]!=wmClass){
 				lesionMembership[x][y][z]+=mems[x][y][z][segmentation[x][y][z]];
 				mems[x][y][z][segmentation[x][y][z]]=0.0f;
 				classification[x][y][z] = templateLabel[wmClass];
@@ -3642,7 +3790,7 @@ final public void computeNormalizedModifiedVentDistance(){
 		byte[][][]	Classif = new byte[nx][ny][nz];
 		
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
-			if (skeleton[x][y][z]!=EMPTY) Classif[x][y][z] = templateLabel[segmentation[x][y][z]];
+			if (segmentation[x][y][z]!=EMPTY) Classif[x][y][z] = templateLabel[segmentation[x][y][z]];
 			else Classif[x][y][z] = 0;
 		}
 		return Classif;
