@@ -51,7 +51,7 @@ public class LesionToadPreprocess {
 	//private		float[][]	sliceLow, sliceHigh;
 	// for debug and display
 	static final boolean		debug				=	false;
-	static final boolean		verbose				=	false;
+	static final boolean		verbose				=	true;
     
 	// constants
 	private static final	float   ISQRT2 = (float)(1.0/Math.sqrt(2.0f));
@@ -226,8 +226,8 @@ public class LesionToadPreprocess {
 					
 			 
 			
-			if (debug) System.out.println("image "+(c+1)+" range: ["+Imin[c]+", "+Imax[c]+"]\n");
-			if (robustMaxMin && debug) System.out.println("image "+(c+1)+" eff. range: ["+Ilow[c]+", "+Ihigh[c]+"]\n");
+			if (verbose) System.out.println("image "+(c+1)+" range: ["+Imin[c]+", "+Imax[c]+"]\n");
+			if (robustMaxMin && verbose) System.out.println("image "+(c+1)+" eff. range: ["+Ilow[c]+", "+Ihigh[c]+"]\n");
 		}
 		
 		if (debug) System.out.println("initialisation: done\n");
@@ -865,7 +865,7 @@ public class LesionToadPreprocess {
 				}
 			}
 		}
-		if (debug) {
+		if (verbose) {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
@@ -921,7 +921,7 @@ public class LesionToadPreprocess {
 			}
 		}
 		
-		if (debug) {
+		if (verbose) {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
@@ -967,7 +967,7 @@ public class LesionToadPreprocess {
 			}
 		}
 		
-		if (debug) {
+		if (verbose) {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
