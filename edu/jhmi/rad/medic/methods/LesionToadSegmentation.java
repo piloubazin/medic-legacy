@@ -187,7 +187,7 @@ public class LesionToadSegmentation {
 	private 	boolean 		isCompleted;
 	
 	// for debug and display
-	static final boolean		debug=false;
+	static final boolean		debug=true;
 	static final boolean		verbose=true;
 	 
 	

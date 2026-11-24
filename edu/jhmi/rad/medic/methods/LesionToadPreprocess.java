@@ -50,7 +50,7 @@ public class LesionToadPreprocess {
 	private		float[]		Ilow,Ihigh;	// image robust normalised min,max
 	//private		float[][]	sliceLow, sliceHigh;
 	// for debug and display
-	static final boolean		debug				=	false;
+	static final boolean		debug				=	true;
 	static final boolean		verbose				=	true;
     
 	// constants

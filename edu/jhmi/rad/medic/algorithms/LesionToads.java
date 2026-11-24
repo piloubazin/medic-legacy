@@ -103,7 +103,7 @@ public class LesionToads {
 	private boolean     outputClassificationFromMembership = true;
 	private boolean     outputField = false;
 	private boolean		verbose = true;
-	private boolean     debug   = false;
+	private boolean     debug   = true;
 	
     /**
     *	Constructor for 3D images in which changes are placed in a predetermined destination image.
