@@ -44,7 +44,6 @@ public class LesionToadPreprocess {
 	// structure parameters
 	private 	int 		nobj;    	// number of structures
 	private		byte		bgLabel;    // label of the background (usually 1)
-	private		float		bgRatio;	// ratio of image intensity used as background
 	private		int			bs;	// the amount of extra borders
 	private		float[]		Imin,Imax;	// image min,max
 	private		float[]		Ilow,Ihigh;	// image robust normalised min,max
@@ -82,7 +81,7 @@ public class LesionToadPreprocess {
 									byte[][][] topo_, 
 									int ntx_, int nty_, int ntz_,
 									float rtx_, float rty_, float rtz_,
-									int nobjs_, byte bgLb_, float bgRatio_,
+									int nobjs_, byte bgLb_, 
 									int bdSz_) {
 		if (debug)
 			if (robustMaxMin)
@@ -123,7 +122,6 @@ public class LesionToadPreprocess {
 		
 		nobj = nobjs_;
 		bgLabel = bgLb_;
-		bgRatio = bgRatio_;
 		bs = bdSz_;
 		
 		// orientation: initialize a rotation
@@ -191,10 +189,11 @@ public class LesionToadPreprocess {
 		Ihigh = new float[nc];
 		/*sliceLow = new float[nc][niz];
 		sliceHigh = new float[nc][niz];*/
-				for (int c=0;c<nc;c++) {
+		for (int c=0;c<nc;c++) {
 			Imin[c] = images[c][0][0][0];
 			Imax[c] = images[c][0][0][0];
 			for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
+			    /* need to allow negative values
 				//map any negative value in the image to zero
 				if (images[c][x][y][z] < 0.0f){
 					images[c][x][y][z] = 0.0f;
@@ -202,16 +201,19 @@ public class LesionToadPreprocess {
 				}else{
 					if (images[c][x][y][z] > Imax[c]) Imax[c] = images[c][x][y][z];
 					if (images[c][x][y][z] < Imin[c]) Imin[c] = images[c][x][y][z];
-				}
+				}*/
+                if (images[c][x][y][z] > Imax[c]) Imax[c] = images[c][x][y][z];
+                if (images[c][x][y][z] < Imin[c]) Imin[c] = images[c][x][y][z];				
 			}
 			if (robustMaxMin){
 				Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, nix, niy, niz );
 				Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, nix, niy, niz );
+				/*
 				float[][][] shuflled_image  = new float[niz][nix][niy];
 				for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
 					shuflled_image[z][x][y] = images[c][x][y][z];
 				}
-				/*for (int z=0;z<niz;z++){
+				for (int z=0;z<niz;z++){
 					sliceLow[c][z] = ImageFunctions.robustMinimum(shuflled_image[z], 0.01f, 2, nix, niy );
 					sliceHigh[c][z] = ImageFunctions.robustMaximum(shuflled_image[z], 0.01f, 2, nix, niy );
 				}*/
@@ -374,9 +376,7 @@ public class LesionToadPreprocess {
 			for (int c=0;c<nc;c++) {
 				//if ( ( (normalized) && (images[c][x][y][z]> bgRatio) ) 
 					//|| (images[c][x][y][z]> Imin[c] + bgRatio*(Imax[c]-Imin[c]) ) ) {
-				if ( ( (normalized) && (images[c][x][y][z]> bgRatio) ) 
-						|| (robustMaxMin && images[c][x][y][z]> bgRatio*(Ihigh[c]-Ilow[c]) ) 
-						|| ( !robustMaxMin && images[c][x][y][z]> Imin[c] + bgRatio*(Imax[c]-Imin[c]) ) ) {
+				if (images[c][x][y][z]!=0) {
 					if (x < x0i) x0i = x;
 					if (x > xNi) xNi = x;
 					if (y < y0i) y0i = y;
@@ -696,15 +696,21 @@ public class LesionToadPreprocess {
 		
 		if (robustMaxMin)
 			/* normalize over the robust min, max  but keeping 0 as the min value 
-		   	(equivalent span for all images, but different means if needed, and masking is preserved) */
+		   	(equivalent span for all images, but different means if needed, and masking is preserved) 
 			for (int c=0;c<nc;c++) for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
 				images[c][x][y][z] = (images[c][x][y][z])/(Ihigh[c]-Ilow[c]);
 				//images[c][x][y][z] = (images[c][x][y][z])/(sliceHigh[c][z]-sliceLow[c][z]);
+			}*/
+			// Here we only use the high value, so zero stays zero and is used as mask. Negative values stay negative too
+			for (int c=0;c<nc;c++) for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
+				images[c][x][y][z] = images[c][x][y][z]/Ihigh[c];
+				//images[c][x][y][z] = (images[c][x][y][z])/(sliceHigh[c][z]-sliceLow[c][z]);
 			}
 		else
-			// Normalize image to [0,1]
+			// Normalize image to [0,1]; not quite, keep zero as mask and only use the max
 			for (int c=0;c<nc;c++) for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
-				images[c][x][y][z] = (images[c][x][y][z]-Imin[c])/(Imax[c]-Imin[c]);
+				images[c][x][y][z] = images[c][x][y][z]/Imax[c];
+				//images[c][x][y][z] = (images[c][x][y][z]-Imin[c])/(Imax[c]-Imin[c]);
 			}
 	
 		normalized = true;
@@ -845,7 +851,8 @@ public class LesionToadPreprocess {
 		if (robustMaxMin){
 			for (int c=0; c<nc; c++)
 				for (int k =0; k<classes; k++)
-					centroid[c][k] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c][k];
+					//centroid[c][k] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c][k];
+					centroid[c][k] = prior[c][k];
 		}else{
 			for (int c=0;c<nc;c++) {
 				if (cropped) {
@@ -859,8 +866,9 @@ public class LesionToadPreprocess {
 																   +(Imin[c]+Ihigh[c]*(Imax[c]-Imin[c]) )+"]\n");
 				// adjust the first centroids
 				for (int k=0;k<classes;k++) {
-				//centroid[c][k] = Ilow + ratio[k]*(Ihigh-Ilow);
-					centroid[c][k] = Ilow[c] + prior[c][k]*(Ihigh[c]-Ilow[c]);
+				    //centroid[c][k] = Ilow + ratio[k]*(Ihigh-Ilow);
+					//centroid[c][k] = Ilow[c] + prior[c][k]*(Ihigh[c]-Ilow[c]);
+					centroid[c][k] = prior[c][k]*Ihigh[c];
 				
 				}
 			}
@@ -869,15 +877,15 @@ public class LesionToadPreprocess {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
-					info += "image "+c+" centroids: ("+(centroid[c][0]*(Ihigh[c]-Ilow[c]) );
+					info += "image "+c+" centroids: ("+(centroid[c][0]*Ihigh[c]);
 				else
-					info += "image "+c+" centroids: ("+(Imin[c]+centroid[c][0]*(Imax[c]-Imin[c]) );
+					info += "image "+c+" centroids: ("+(centroid[c][0]*Imax[c]);
 					
 				for (int k=1;k<classes;k++) 
 					if (robustMaxMin)
-						info += ", "+(centroid[c][k]*(Ihigh[c]-Ilow[c]) );
+						info += ", "+(centroid[c][k]*Ihigh[c] );
 					else
-						info += ", "+(Imin[c]+centroid[c][k]*(Imax[c]-Imin[c]) );
+						info += ", "+(Imin[c]+centroid[c][k]*Imax[c] );
 						
 				info += ")\n";
 			}
@@ -901,7 +909,8 @@ public class LesionToadPreprocess {
 		if (robustMaxMin){
 			for (int c=0;c<nc;c++) {
 				//lesion[c] = Ilow[c] + prior[c]*(Ihigh[c]-Ilow[c]);
-				lesion[c] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c];
+				//lesion[c] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c];
+				lesion[c] = prior[c];
 			}
 		}else{
 			for (int c=0;c<nc;c++) {
@@ -917,7 +926,8 @@ public class LesionToadPreprocess {
 																   +(Imin[c]+Ihigh[c]*(Imax[c]-Imin[c]) )+"]\n");
 			}	
 			for (int k=0;k<nc;k++) {
-				lesion[k] = Ilow[k] + prior[k]*(Ihigh[k]-Ilow[k]);
+				//lesion[k] = Ilow[k] + prior[k]*(Ihigh[k]-Ilow[k]);
+				lesion[k] = prior[k]*Ihigh[k];
 			}
 		}
 		
@@ -925,9 +935,9 @@ public class LesionToadPreprocess {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
-					info += "image "+c+" lesion: ("+(lesion[c]*(Ihigh[c]-Ilow[c]) );
+					info += "image "+c+" lesion: ("+(lesion[c]*Ihigh[c]);
 				else
-					info += "image "+c+" lesion: ("+(Imin[c]+lesion[c]*(Imax[c]-Imin[c]) );
+					info += "image "+c+" lesion: ("+(lesion[c]*Imax[c]);
 				info += ")\n";
 			}
 			System.out.println(info);
@@ -947,7 +957,8 @@ public class LesionToadPreprocess {
 		if (robustMaxMin){
 			for (int c=0;c<nc;c++) {
 				//lesion[c] = Ilow[c] + prior[c]*(Ihigh[c]-Ilow[c]);
-				blackHole[c] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c];
+				//blackHole[c] = Ilow[c]/(Ihigh[c]-Ilow[c]) + prior[c];
+				blackHole[c] = prior[c];
 			}
 		}else{
 			for (int c=0;c<nc;c++) {
@@ -963,7 +974,8 @@ public class LesionToadPreprocess {
 																   +(Imin[c]+Ihigh[c]*(Imax[c]-Imin[c]) )+"]\n");
 			}	
 			for (int k=0;k<nc;k++) {
-				blackHole[k] = Ilow[k] + prior[k]*(Ihigh[k]-Ilow[k]);
+				//blackHole[k] = Ilow[k] + prior[k]*(Ihigh[k]-Ilow[k]);
+				blackHole[k] = prior[k]*Ihigh[k];
 			}
 		}
 		
@@ -971,9 +983,9 @@ public class LesionToadPreprocess {
 			String info = "";;
 			for (int c=0;c<nc;c++) {
 				if (robustMaxMin)
-					info += "image "+c+" lesion: ("+(blackHole[c]*(Ihigh[c]-Ilow[c]) );
+					info += "image "+c+" lesion: ("+(blackHole[c]*Ihigh[c]);
 				else
-					info += "image "+c+" lesion: ("+(Imin[c]+blackHole[c]*(Imax[c]-Imin[c]) );
+					info += "image "+c+" lesion: ("+(blackHole[c]*Imax[c]);
 				info += ")\n";
 			}
 			System.out.println(info);

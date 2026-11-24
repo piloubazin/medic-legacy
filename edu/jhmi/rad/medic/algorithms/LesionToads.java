@@ -257,7 +257,7 @@ public class LesionToads {
 		preprocess = new LesionToadPreprocess(srcImage, nc, nx, ny, nz, rx, ry, rz,
 												orient, orx, ory, orz,
 												atlas.getTemplate(), ntx, nty, ntz, rtx, rty, rtz,
-												classes, (byte)1, 0.0f, 10);
+												classes, (byte)1, 10);
 		
 		if (debug) System.out.println(preprocess.displayTransform());
 		// put all intensities in [0,1]										
