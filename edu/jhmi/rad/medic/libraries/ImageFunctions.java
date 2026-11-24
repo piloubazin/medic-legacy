@@ -1665,6 +1665,78 @@ public class ImageFunctions {
 	 *    @param 	scales	int: the number of times the scale is refined for finding the robust minimum
 	 *	  @return 			the robust minimum value	
      */
+    public static final float robustNonZeroMinimum(float[][][] image, float ratio, int scales, int nx, int ny, int nz ) {
+		float Imin,Imax,Rmin;
+		int Nbins = 10;
+		float[] bins = new float[Nbins];
+		float count;
+		int n;
+		
+		// ratio: global value
+		ratio = ratio*nx*ny*nz;
+		
+		// find first min, max
+		Imin = 1e9f;
+		Imax = -1e9f;
+		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) if (image[x][y][z]!=0) {
+			if (image[x][y][z]>Imax) Imax = image[x][y][z];
+			if (image[x][y][z]<Imin) Imin = image[x][y][z];
+		}
+		Rmin = Imin;
+		
+		for (int t=0;t<scales;t++) {
+			
+			Rmin = Imin;
+		
+			// compute coarse histogram
+			for (n=0;n<Nbins;n++) bins[n] = 0;
+			
+			for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) if (image[x][y][z]!=0) {
+				// first one include both boundaries 
+				if (  (image[x][y][z] >= Imin )
+					&&(image[x][y][z] <= Imin + 1.0f/(float)Nbins*(Imax-Imin) ) ) bins[0]++;
+				for (n=1;n<Nbins;n++) {
+					if (  (image[x][y][z] >  Imin + (float)n/(float)Nbins*(Imax-Imin) )
+						&&(image[x][y][z] <= Imin + (float)(n+1)/(float)Nbins*(Imax-Imin) ) ) bins[n]++;	
+				}
+			}
+			/* debug
+			System.out.print("histogram: \n");
+			for (n=0;n<Nbins;n++) System.out.print(" | "+bins[n]);
+			System.out.print("\n");
+			*/
+			
+			// find the value corresponding to the ratio
+			count = 0;
+			n=0;
+			while ( (count < ratio) && (n<Nbins) ) {
+				count +=bins[n];
+				n=n+1;
+			}
+			Rmin = Imin + (float)(n-0.5f)/(float)Nbins*(Imax-Imin);
+			
+			//System.out.print("robust minimum: "+Rmin+" ("+n+", "+ratio+", "+count+")\n");
+		
+			// new boundaries
+			float I0 = Imin + (float)(n-1)/(float)Nbins*(Imax-Imin);
+			float I1 = Imin + (float)(n)/(float)Nbins*(Imax-Imin);
+			
+			Imin = I0;
+			Imax = I1;
+			
+			// new ratio
+			ratio = ratio - (count-bins[n-1]);		
+		}
+		
+		return Rmin;
+	}
+
+	/**
+     *    Robust maximum estimation
+     *    @param 	ratio	float fraction in [0,1]: the minimum number of points below or equal to the minimum over the total volume
+	 *    @param 	scales	int: the number of times the scale is refined for finding the robust minimum
+	 *	  @return 			the robust minimum value	
+     */
     public static final float robustMinimum(float[] image, float ratio, int scales, int nx, int ny, int nz ) {
 		float Imin,Imax,Rmin;
 		int Nbins = 10;
@@ -1765,6 +1837,79 @@ public class ImageFunctions {
 			for (n=0;n<Nbins;n++) bins[n] = 0;
 			
 			for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
+				// first one include both boundaries 
+				if (  (image[x][y][z] >= Imin )
+					&&(image[x][y][z] <= Imin + 1.0f/(float)Nbins*(Imax-Imin) ) ) bins[0]++;
+				for (n=1;n<Nbins;n++) {
+					if (  (image[x][y][z] >  Imin + (float)n/(float)Nbins*(Imax-Imin) )
+						&&(image[x][y][z] <= Imin + (float)(n+1)/(float)Nbins*(Imax-Imin) ) ) bins[n]++;	
+				}
+			}
+			/* debug
+			System.out.print("histogram: \n");
+			for (n=0;n<Nbins;n++) System.out.print(" | "+bins[n]);
+			System.out.print("\n");
+			*/
+			
+			// find the value corresponding to the ratio
+			count = 0;
+			n=Nbins;
+			while ( (count < ratio) && (n>0) ) {
+				n=n-1;
+				count +=bins[n];
+			}
+			Rmax = Imin + (float)(n+0.5f)/(float)Nbins*(Imax-Imin);
+			
+			//System.out.print("robust maximum: "+Rmax+" ("+n+", "+ratio+", "+count+")\n");		
+
+			// new boundaries
+			float I0 = Imin + (float)n/(float)Nbins*(Imax-Imin);
+			float I1 = Imin + (float)(n+1)/(float)Nbins*(Imax-Imin);
+			
+			Imin = I0;
+			Imax = I1;
+			
+			// new ratio
+			ratio = ratio - (count-bins[n]);			
+		}
+		
+		return Rmax;
+	}
+
+	/**
+     *    Robust maximum estimation
+     *    @param 	ratio	float fraction in [0,1]: the minimum number of points above or equal to the maximum over the total volume
+	 *    @param 	scales	int: the number of times the scale is refined for finding the robust maximum
+	 *	  @param	nx,ny,nz	image dimensions
+	 *	  @return 			the robust maximum value	
+     */
+    public static final float robustNonZeroMaximum(float[][][] image, float ratio, int scales, int nx, int ny, int nz ) {
+		float Imin,Imax,Rmax;
+		int Nbins = 10;
+		float[] bins = new float[Nbins];
+		float count;
+		int n;
+		
+		// ratio: global value
+		ratio = ratio*nx*ny*nz;
+		
+		// find first min, max
+		Imin = 1e9f;
+		Imax = -1e9f;
+		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) if (image[x][y][z]!=0) {
+			if (image[x][y][z]>Imax) Imax = image[x][y][z];
+			if (image[x][y][z]<Imin) Imin = image[x][y][z];
+		}
+		Rmax = Imax;
+		
+		for (int t=0;t<scales;t++) {
+			
+			Rmax = Imax;
+			
+			// compute coarse histogram
+			for (n=0;n<Nbins;n++) bins[n] = 0;
+			
+			for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) if (image[x][y][z]!=0) {
 				// first one include both boundaries 
 				if (  (image[x][y][z] >= Imin )
 					&&(image[x][y][z] <= Imin + 1.0f/(float)Nbins*(Imax-Imin) ) ) bins[0]++;

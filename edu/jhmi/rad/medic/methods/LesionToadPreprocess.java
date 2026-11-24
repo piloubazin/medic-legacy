@@ -206,8 +206,8 @@ public class LesionToadPreprocess {
                 if (images[c][x][y][z] < Imin[c]) Imin[c] = images[c][x][y][z];				
 			}
 			if (robustMaxMin){
-				Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, nix, niy, niz );
-				Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, nix, niy, niz );
+				Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, nix, niy, niz );
+				Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, nix, niy, niz );
 				/*
 				float[][][] shuflled_image  = new float[niz][nix][niy];
 				for (int x=0;x<nix;x++) for (int y=0;y<niy;y++) for (int z=0;z<niz;z++) {
@@ -856,11 +856,11 @@ public class LesionToadPreprocess {
 		}else{
 			for (int c=0;c<nc;c++) {
 				if (cropped) {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, mix, miy, miz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, mix, miy, miz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, mix, miy, miz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, mix, miy, miz );
 				} else {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, nix, niy, niz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, nix, niy, niz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, nix, niy, niz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, nix, niy, niz );
 				}
 				if (debug) System.out.println("image centroid range: ["+(Imin[c]+Ilow[c]*(Imax[c]-Imin[c]) )+", "
 																   +(Imin[c]+Ihigh[c]*(Imax[c]-Imin[c]) )+"]\n");
@@ -915,11 +915,11 @@ public class LesionToadPreprocess {
 		}else{
 			for (int c=0;c<nc;c++) {
 				if (cropped) {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, mix, miy, miz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, mix, miy, miz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, mix, miy, miz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, mix, miy, miz );
 				} else {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, nix, niy, niz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, nix, niy, niz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, nix, niy, niz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, nix, niy, niz );
 				}
 			
 				if (debug) System.out.println("image centroid range: ["+(Imin[c]+Ilow[c]*(Imax[c]-Imin[c]) )+", "
@@ -963,11 +963,11 @@ public class LesionToadPreprocess {
 		}else{
 			for (int c=0;c<nc;c++) {
 				if (cropped) {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, mix, miy, miz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, mix, miy, miz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, mix, miy, miz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, mix, miy, miz );
 				} else {
-					Ilow[c] = ImageFunctions.robustMinimum(images[c], 0.01f, 2, nix, niy, niz );
-					Ihigh[c] = ImageFunctions.robustMaximum(images[c], 0.01f, 2, nix, niy, niz );
+					Ilow[c] = ImageFunctions.robustNonZeroMinimum(images[c], 0.01f, 2, nix, niy, niz );
+					Ihigh[c] = ImageFunctions.robustNonZeroMaximum(images[c], 0.01f, 2, nix, niy, niz );
 				}
 			
 				if (debug) System.out.println("image centroid range: ["+(Imin[c]+Ilow[c]*(Imax[c]-Imin[c]) )+", "
