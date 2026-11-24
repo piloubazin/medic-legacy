@@ -91,7 +91,13 @@ public class DemonToadDeformableAtlas {
 	public		static final int	PD = 5;
 	private		static final int	PDFSE = 6;
 	private		static final int	DIR = 7;
-	private		static final int	INTENSITY = 8;	// the number of possible intensity models
+	private		static final int	R1 = 8;
+	private		static final int	R2s = 9;
+	private		static final int	MTs = 10;
+	private		static final int	qPD = 11;
+	private		static final int	QSM = 12;
+	
+	private		static final int	INTENSITY = 13;	// the number of possible intensity models
 	
 	// modality weighting
 	private		float[][]			modweight;		// the weighting for modality and obj / lesion (temporary)
@@ -368,6 +374,11 @@ public class DemonToadDeformableAtlas {
 				else if (modality[n].equals("T1_MPRAGE")) prior[n] = blackHole[T1_MPRAGE];
 				//else if (modality[n].equals("T1_RAW")) prior[n] = blackHole[T1_RAW];
 				else if (modality[n].equals("PD")) prior[n] = blackHole[PD];
+				else if (modality[n].equals("R1")) prior[n] = blackHole[R1];
+				else if (modality[n].equals("R2s")) prior[n] = blackHole[R2s];
+				else if (modality[n].equals("MTs")) prior[n] = blackHole[MTs];
+				else if (modality[n].equals("qPD")) prior[n] = blackHole[qPD];
+				else if (modality[n].equals("QSM")) prior[n] = blackHole[QSM];
 			}	
 		} else {
 			for (int n=0;n<nc;n++) prior[n] = 0.0f;
@@ -746,6 +757,21 @@ public class DemonToadDeformableAtlas {
 		output += "PDFSE ("+hasIntensity[6]+") : ";
 		for (int k=0;k<classes;k++) output += intensity[6][k]+" ";
 		output += "\n";
+		output += "R1 ("+hasIntensity[R1]+") : ";
+		for (int k=0;k<classes;k++) output += intensity[R1][k]+" ";
+		output += "\n";
+		output += "R2s ("+hasIntensity[R2s]+") : ";
+		for (int k=0;k<classes;k++) output += intensity[R2s][k]+" ";
+		output += "\n";
+		output += "MTs ("+hasIntensity[MTs]+") : ";
+		for (int k=0;k<classes;k++) output += intensity[MTs][k]+" ";
+		output += "\n";
+		output += "qPD ("+hasIntensity[qPD]+") : ";
+		for (int k=0;k<classes;k++) output += intensity[qPD][k]+" ";
+		output += "\n";
+		output += "QSM ("+hasIntensity[QSM]+") : ";
+		for (int k=0;k<classes;k++) output += intensity[QSM][k]+" ";
+		output += "\n";
 		
 		return output;	
 	}
@@ -774,6 +800,21 @@ public class DemonToadDeformableAtlas {
 		output += "PDFSE ("+hasIntensityVariance[6]+") : ";
 		for (int k=0;k<classes;k++) output += intensityVariance[6][k]+" ";
 		output += "\n";
+		output += "R1 ("+hasIntensityVariance[R1]+") : ";
+		for (int k=0;k<classes;k++) output += intensityVariance[R1][k]+" ";
+		output += "\n";
+		output += "R2s ("+hasIntensityVariance[R2s]+") : ";
+		for (int k=0;k<classes;k++) output += intensityVariance[R2s][k]+" ";
+		output += "\n";
+		output += "MTs ("+hasIntensityVariance[MTs]+") : ";
+		for (int k=0;k<classes;k++) output += intensityVariance[MTs][k]+" ";
+		output += "\n";
+		output += "qPD ("+hasIntensityVariance[qPD]+") : ";
+		for (int k=0;k<classes;k++) output += intensityVariance[qPD][k]+" ";
+		output += "\n";
+		output += "QSM ("+hasIntensityVariance[QSM]+") : ";
+		for (int k=0;k<classes;k++) output += intensityVariance[QSM][k]+" ";
+		output += "\n";
 		
 		return output;	
 	}
@@ -795,6 +836,21 @@ public class DemonToadDeformableAtlas {
 		output += "\n";
 		output += "MPRAGE_RAW : ";
 		for (int k=0;k<OBJTYPES;k++) output += modweight[4][k]+" ";
+		output += "\n";
+		output += "R1 : ";
+		for (int k=0;k<OBJTYPES;k++) output += modweight[R1][k]+" ";
+		output += "\n";
+		output += "R2s : ";
+		for (int k=0;k<OBJTYPES;k++) output += modweight[R2s][k]+" ";
+		output += "\n";
+		output += "MTs : ";
+		for (int k=0;k<OBJTYPES;k++) output += modweight[MTs][k]+" ";
+		output += "\n";
+		output += "qPD : ";
+		for (int k=0;k<OBJTYPES;k++) output += modweight[qPD][k]+" ";
+		output += "\n";
+		output += "QSM : ";
+		for (int k=0;k<OBJTYPES;k++) output += modweight[QSM][k]+" ";
 		output += "\n";
 		
 		return output;	
@@ -818,6 +874,21 @@ public class DemonToadDeformableAtlas {
 		output += "MPRAGE_RAW : ";
 		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[4][k]+" ";
 		output += "\n";
+		output += "R1 : ";
+		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[R1][k]+" ";
+		output += "\n";
+		output += "R2s : ";
+		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[R2s][k]+" ";
+		output += "\n";
+		output += "MTs : ";
+		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[MTs][k]+" ";
+		output += "\n";
+		output += "qPD : ";
+		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[qPD][k]+" ";
+		output += "\n";
+		output += "QSM : ";
+		for (int k=0;k<OPTIMIZED;k++) output += optimizedFactor[QSM][k]+" ";
+		output += "\n";
 		
 		return output;	
 	}
@@ -832,6 +903,11 @@ public class DemonToadDeformableAtlas {
 		output += ", MPRAGE_RAW "+lesion[4];
 		output += ", PD "+lesion[5];
 		output += ", PDFSE "+lesion[6];
+		output += ", R1 "+lesion[R1];
+		output += ", R2s "+lesion[R2s];
+		output += ", MTs "+lesion[MTs];
+		output += ", qPD "+lesion[qPD];
+		output += ", QSM "+lesion[QSM];
 		output += "\n";
 		
 		return output;	
@@ -1285,6 +1361,11 @@ public class DemonToadDeformableAtlas {
 		else if (type.equals("PD")) id = PD;
 		else if (type.equals("PDFSE")) id = PDFSE;
 		else if (type.equals("DIR")) id = DIR;
+		else if (type.equals("R1")) id = R1;
+		else if (type.equals("R2s")) id = R2s;
+		else if (type.equals("MTs")) id = MTs;
+		else if (type.equals("qPD")) id = qPD;
+		else if (type.equals("QSM")) id = QSM;
 		
 		return id;
 	}					
