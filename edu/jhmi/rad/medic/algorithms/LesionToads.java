@@ -481,7 +481,10 @@ public class LesionToads {
 			
 			
 			// shape alignment
-			if (alignShapes) atlas.registerShapes();
+			if (alignShapes) {
+			    atlas.registerShapes();
+                if (verbose) System.out.println("re-aligned atlas: "+atlas.displayTransform(atlas.getTransform()));
+            }
 				
 			if (debug) System.out.print("alignment time: " + (System.currentTimeMillis()-iterationTime)+"\n"); 
 			if (debug) iterationTime = System.currentTimeMillis();
