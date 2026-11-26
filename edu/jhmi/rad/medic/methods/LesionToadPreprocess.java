@@ -264,9 +264,11 @@ public class LesionToadPreprocess {
 		
 		for (int c=0;c<nc;c++) 
 			if (robustMaxMin)
-				scale[c] = (Ihigh[c]-Ilow[c]);
+				//scale[c] = (Ihigh[c]-Ilow[c]);
+				scale[c] = Ihigh[c];
 			else
-				scale[c] = (Imax[c]-Imin[c]);
+				//scale[c] = (Imax[c]-Imin[c]);
+				scale[c] = Imax[c];
 		
 		return scale;
 	}

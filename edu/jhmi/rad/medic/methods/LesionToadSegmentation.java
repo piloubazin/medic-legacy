@@ -2886,6 +2886,12 @@ public class LesionToadSegmentation {
 						// no change: previous value
 					}
 				} else if (centroidMode.equals("prior")) {
+					if (den[k]>0.0) {
+						centroid[c][k] = (1.0f-centroidSmoothness)*num[k]/den[k] + centroidSmoothness*priorCentroid[c][k];
+					} else {
+						// no change: previous value
+					}
+					/* arbitrary scaling
 					float nsum,dsum;
 					nsum = num[k];
 					dsum = den[k];
@@ -2897,7 +2903,7 @@ public class LesionToadSegmentation {
 						centroid[c][k] = nsum/dsum;	
 					} else {
 						centroid[c][k] = 0.0f;
-					}
+					}*/
 				} else {
 					if (den[k]>0.0) {
 						centroid[c][k] = num[k]/den[k];
