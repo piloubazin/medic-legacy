@@ -283,7 +283,7 @@ public class LesionToads {
 			
 			atlas.setImageInfo(nx,ny,nz,rx,ry,rz,orient,orx,ory,orz);
 			
-			if registrationMode.equals("rigid") {
+			if (registrationMode.equals("rigid")) {
 			    atlas.initShapeRegistration(memberships, "rigid", initAlignIter, levels);
 			} else {
                 atlas.initShapeRegistration(memberships, "single_scale", initAlignIter, levels);
