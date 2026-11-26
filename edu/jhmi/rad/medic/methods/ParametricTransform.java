@@ -73,8 +73,12 @@ public class ParametricTransform {
 		rtx = rtx_; rty = rty_; rtz = rtz_;
 		ntx = ntx_; nty = nty_; ntz = ntz_;
 		
+		/* not useful?
 		Iscale2 = 0.25f*( nix*rix*nix*rix + niy*riy*niy*riy + niz*riz*niz*riz );
 		Iscale = (float)Math.sqrt(Iscale2);	
+		*/
+		Iscale = 1.0f;
+		Iscale2 = 1.0f;
 	}
 	
 	public final void finalize() {
