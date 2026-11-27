@@ -3254,10 +3254,10 @@ public class LesionToadSegmentation {
 	 *	output the variances
 	 */
     public final String displayVariances() {
-        String output = "stddevs \n";
+        String output = "stdevs \n";
 		for (int c=0;c<nc;c++) {
 			output += modality[c] + " : " + stddev[c][0];
-			for (int k=1;k<classes;k++) output +=" | "+stddev[c][k]*stddev[c][k];//*Iscale[c];
+			for (int k=1;k<classes;k++) output +=" | "+stddev[c][k];//*stddev[c][k];//*Iscale[c];
 			output += "\n";
 		}
 		return output;
@@ -3316,7 +3316,7 @@ public class LesionToadSegmentation {
     public final String displayLesionVariance() {
         String output = "lesion std: \n";
 		for (int c=0;c<nc;c++) {
-			output +=modality[c] + " : "+lesionStDev[c]*lesionStDev[c] + " | ";
+			output +=modality[c] + " : "+lesionStDev[c]/*lesionStDev[c]*/ + " | ";
 		}
 		output += "\n";
 		
@@ -3330,7 +3330,7 @@ public class LesionToadSegmentation {
     public final String displayBlackHoleVariance() {
         String output = "black hole std: \n";
 		for (int c=0;c<nc;c++) {
-			output +=modality[c] + " : "+blackHoleStdDev[c]*blackHoleStdDev[c] + " | ";
+			output +=modality[c] + " : "+blackHoleStdDev[c]/*blackHoleStdDev[c]*/ + " | ";
 		}
 		output += "\n";
 		
