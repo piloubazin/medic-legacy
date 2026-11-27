@@ -515,7 +515,7 @@ public class LesionToads {
 			    int update = segmentation.updateClassificationFromLabels();
 				if (verbose) System.out.println("update: "+update);
 				segmentation.updateLesionClassifcation();
-				segmentation.finalizeSegmentation(rx*ry*rz);
+				//segmentation.finalizeSegmentation(rx*ry*rz);
 			}
 			
 			// update the relation list
