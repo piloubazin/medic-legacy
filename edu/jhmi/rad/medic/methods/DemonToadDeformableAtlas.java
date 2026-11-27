@@ -148,7 +148,7 @@ public class DemonToadDeformableAtlas {
 	private static final byte	T = 3;
 	
 	// for debug and display
-	private static final boolean		debug=false;
+	private static final boolean		debug=true;
 	private static final boolean		verbose=true;
 	
 	
