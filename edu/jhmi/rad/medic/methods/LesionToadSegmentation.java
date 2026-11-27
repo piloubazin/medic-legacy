@@ -1270,25 +1270,25 @@ public class LesionToadSegmentation {
 								num += channelWeight[c] * (field[c][x][y][z]*images[c][x][y][z]-centroid[c][k])*(field[c][x][y][z]*images[c][x][y][z]-centroid[c][k]);
 								//num += varweight[c][k] * channelWeight[c] * (field[c][x][y][z]*images[c][x][y][z]-centroid[c][k])*(field[c][x][y][z]*images[c][x][y][z]-centroid[c][k]);
 							}
-								if ((flair != -1) && useLesionWeight){
-									numL += powerlesion[flair].lookup((field[flair][x][y][z]*images[flair][x][y][z]-lesionCentroid[flair])*(field[flair][x][y][z]*images[flair][x][y][z]-lesionCentroid[flair]),plesion[flair]);
-								}else if ( (flair!=-1) && (t2!=-1) && useEverything){
-									for (int c=0;c<nc;c++) if (c!=t1) 
-										  numL += 0.5f * powerlesion[c].lookup((field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c])*(field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
-								}else	
-									for (int c=0;c<nc;c++) 
-									  numL += channelWeight[c] * powerlesion[c].lookup((field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c])*(field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
+                            if ((flair != -1) && useLesionWeight){
+                                numL += powerlesion[flair].lookup((field[flair][x][y][z]*images[flair][x][y][z]-lesionCentroid[flair])*(field[flair][x][y][z]*images[flair][x][y][z]-lesionCentroid[flair]),plesion[flair]);
+                            }else if ( (flair!=-1) && (t2!=-1) && useEverything){
+                                for (int c=0;c<nc;c++) if (c!=t1) 
+                                      numL += 0.5f * powerlesion[c].lookup((field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c])*(field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
+                            }else	
+                                for (int c=0;c<nc;c++) 
+                                  numL += channelWeight[c] * powerlesion[c].lookup((field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c])*(field[c][x][y][z]*images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
 							
 						} else {
 							for (int c=0;c<nc;c++) {
 								num += channelWeight[c] * (images[c][x][y][z]-centroid[c][k])*(images[c][x][y][z]-centroid[c][k]);
 								//num += varweight[c][k] *channelWeight[c] * (images[c][x][y][z]-centroid[c][k])*(images[c][x][y][z]-centroid[c][k]);
 							}
-								if ((flair != -1) && useLesionWeight){
-									numL += powerlesion[flair].lookup((images[flair][x][y][z]-lesionCentroid[flair])*(images[flair][x][y][z]-lesionCentroid[flair]),plesion[flair]);
-								}else
-									for (int c=0;c<nc;c++)
-										numL += channelWeight[c] * powerlesion[c].lookup((images[c][x][y][z]-lesionCentroid[c])*(images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
+                            if ((flair != -1) && useLesionWeight){
+                                numL += powerlesion[flair].lookup((images[flair][x][y][z]-lesionCentroid[flair])*(images[flair][x][y][z]-lesionCentroid[flair]),plesion[flair]);
+                            }else
+                                for (int c=0;c<nc;c++)
+                                    numL += channelWeight[c] * powerlesion[c].lookup((images[c][x][y][z]-lesionCentroid[c])*(images[c][x][y][z]-lesionCentroid[c]),plesion[c]);
 						}
 					}else if (objType[k]==BLACKHOLE) {
 						if (useField) {

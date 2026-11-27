@@ -999,8 +999,14 @@ public class ObjectProcessing {
         
         for (n=0;n<nlb;n++) Nobj[n]=0;
         
+        int[] listlb = listLabels(label, nx,ny,nz);
         for (x=0;x<nx;x++) for (y=0;y<ny;y++) for (z=0;z<nz;z++) {
-            Nobj[ label[x][y][z] ]++;
+            for (n=0;n<nlb;n++) {
+                if (listlb[n]==label[x][y][z]) {
+                    Nobj[n]++;
+                    n=nlb;
+                }
+            }
         }
         size=0;best=0;
         for (n=1;n<nlb;n++) if (Nobj[n]>size) {
@@ -1009,7 +1015,7 @@ public class ObjectProcessing {
         }
 		if (best>0)
 			for (x=0;x<nx;x++) for (y=0;y<ny;y++) for (z=0;z<nz;z++) {
-				obj[x][y][z] = (label[x][y][z]==best);
+				obj[x][y][z] = (label[x][y][z]==listlb[best]);
 			}
 		else
 			for (x=0;x<nx;x++) for (y=0;y<ny;y++) for (z=0;z<nz;z++) {
